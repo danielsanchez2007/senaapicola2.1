@@ -65,7 +65,7 @@
             border-radius: 50%;
         }
 
-        .form-control {
+        .form-control, .form-select, textarea {
             background: rgba(255,255,255,0.95);
             border: 2px solid #e0e0e0;
             border-radius: 16px;
@@ -73,7 +73,7 @@
             font-size: 1.05rem;
         }
 
-        .form-control:focus {
+        .form-control:focus, .form-select:focus {
             border-color: var(--sena-orange);
             box-shadow: 0 0 0 5px rgba(255, 159, 28, 0.25);
             outline: none;
@@ -85,7 +85,7 @@
             margin-bottom: 8px;
         }
 
-        .btn-save {
+        .btn-assign {
             background: linear-gradient(90deg, var(--sena-green), var(--sena-orange));
             color: white;
             border: none;
@@ -96,13 +96,39 @@
             box-shadow: 0 10px 30px rgba(57, 169, 0, 0.35);
         }
 
-        .btn-save:hover {
+        .btn-assign:hover {
             transform: translateY(-4px);
             box-shadow: 0 15px 40px rgba(255, 159, 28, 0.45);
         }
 
+        .btn-cancel {
+            border: 2px solid rgba(255,255,255,0.4);
+            color: white;
+            border-radius: 50px;
+            padding: 14px 42px;
+            font-weight: 600;
+            font-size: 1.08rem;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: white;
+        }
+
         .glow-gold {
             text-shadow: 0 0 25px var(--sena-gold);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 110px;
+        }
+
+        /* Estilo para alertas de error */
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.15);
+            border: 1px solid rgba(220, 53, 69, 0.4);
+            color: #ff8a8a;
         }
     </style>
 @endpush
@@ -110,60 +136,87 @@
 @section('content')
     <div class="container py-5 position-relative" style="z-index: 2;">
         <div class="row justify-content-center">
-            <div class="col-12 col-lg-9 col-xl-7">
+            <div class="col-12 col-lg-10 col-xl-8">
                 <div class="form-card">
 
                     <!-- Header -->
                     <div class="card-header">
                         <div class="mb-4">
-                            <i class="fas fa-map-marker-alt fa-4x glow-gold"></i>
+                            <i class="fas fa-tasks fa-4x glow-gold"></i>
                         </div>
-                        <h3 class="fw-bold mb-2">Registrar Nuevo Apiario</h3>
+                        <h3 class="fw-bold mb-2">Asignar Nueva Tarea</h3>
                         <p class="opacity-80 small mb-0">
-                            Ingresa los datos del apiario para su geolocalización y seguimiento en el sistema
+                            Crea y asigna una nueva tarea a un usuario o pasante
                         </p>
                     </div>
 
                     <div class="card-body p-5">
-                        <form action="{{ route('senaapicola.admin.apiaries.store') }}" method="POST">
+                        @if ($errors->any())
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Por favor corrige los siguientes errores:</strong>
+                                <ul class="mb-2">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+
+                        <form action="{{ route('senaapicola.admin.tasks.store') }}" method="POST">
                             @csrf
 
-                            <div class="mb-4">
-                                <label class="form-label">Nombre del Apiario</label>
-                                <input type="text" name="name" class="form-control" 
-                                       placeholder="Ej: Apiario El Bosque" required>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="form-label">Ubicación (texto / referencia)</label>
-                                <input type="text" name="location" class="form-control" 
-                                       placeholder="Ej: Vereda El Triunfo, La Mesa - Huila" required>
-                            </div>
-
                             <div class="row g-4">
-                                <div class="col-md-4">
-                                    <label class="form-label">Latitud</label>
-                                    <input type="number" step="any" name="latitude" class="form-control" 
-                                           placeholder="Ej: 4.7061">
+                                <!-- Título -->
+                                <div class="col-12">
+                                    <label class="form-label">Título de la Tarea</label>
+                                    <input type="text" name="title" class="form-control" 
+                                           value="{{ old('title') }}" placeholder="Ej: Revisión de colmenas sector A" required>
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Longitud</label>
-                                    <input type="number" step="any" name="longitude" class="form-control" 
-                                           placeholder="Ej: -74.2302">
+
+                                <!-- Descripción -->
+                                <div class="col-12">
+                                    <label class="form-label">Descripción</label>
+                                    <textarea name="description" rows="4" class="form-control" 
+                                              placeholder="Detalla la tarea a realizar...">{{ old('description') }}</textarea>
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">URL de Imagen</label>
-                                    <input type="text" name="image_url" class="form-control" 
-                                           placeholder="https://ejemplo.com/imagen-apiario.jpg">
+
+                                <!-- Asignar a usuario -->
+                                <div class="col-md-6">
+                                    <label class="form-label">Asignar a</label>
+                                    <select name="assigned_to" class="form-select" required>
+                                        <option value="">— Seleccione un usuario —</option>
+                                        @foreach($users as $user)
+                                            @php($roleName = optional($user->roles->first())->name ?? 'Sin rol')
+                                            <option value="{{ $user->id }}" 
+                                                    {{ old('assigned_to') == $user->id ? 'selected' : '' }}>
+                                                {{ $user->nickname }} ({{ $roleName }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Fecha límite -->
+                                <div class="col-md-6">
+                                    <label class="form-label">Fecha Límite</label>
+                                    <input type="date" name="due_date" class="form-control" 
+                                           value="{{ old('due_date') }}">
+                                </div>
+
+                                <!-- Notas del administrador -->
+                                <div class="col-12">
+                                    <label class="form-label">Notas del Administrador (Opcional)</label>
+                                    <textarea name="admin_notes" rows="3" class="form-control">{{ old('admin_notes') }}</textarea>
                                 </div>
                             </div>
 
                             <div class="d-flex gap-3 mt-5">
-                                <button type="submit" class="btn btn-save flex-grow-1">
-                                    <i class="fas fa-save me-2"></i> Guardar Apiario
+                                <button type="submit" class="btn btn-assign flex-grow-1">
+                                    <i class="fas fa-paper-plane me-2"></i> Asignar Tarea
                                 </button>
-                                <a href="{{ route('senaapicola.admin.apiaries.index') }}" 
-                                   class="btn btn-outline-light flex-grow-1">
+                                <a href="{{ route('senaapicola.admin.tasks.index') }}" 
+                                   class="btn btn-cancel flex-grow-1 text-center">
                                     Cancelar
                                 </a>
                             </div>
@@ -172,7 +225,7 @@
 
                     <!-- Footer -->
                     <div class="card-footer bg-transparent border-0 text-center py-4 small text-white-50">
-                        El apiario aparecerá en el mapa interactivo una vez guardado.
+                        La tarea aparecerá en el panel del usuario asignado.
                     </div>
                 </div>
             </div>

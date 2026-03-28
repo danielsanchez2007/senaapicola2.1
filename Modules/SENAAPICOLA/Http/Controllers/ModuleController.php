@@ -5,12 +5,15 @@ namespace Modules\SENAAPICOLA\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Apiary;
 use App\Models\ApiaryMonitoring;
+use App\Models\ActivityLog;
 use App\Models\Hive;
 use App\Models\ProductionMonitoring;
+use App\Models\TaskAssignment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Modules\SICA\Entities\Person;
 use Modules\SICA\Entities\Role;
@@ -493,6 +496,262 @@ class ModuleController extends Controller
             : 'senaapicola.intern.profile.edit';
 
         return redirect()->route($profileRoute)->with('success', 'Perfil actualizado correctamente.');
+    }
+
+    public function activitiesHistory(Request $request)
+    {
+        $query = ActivityLog::query()->orderByDesc('logged_at')->orderByDesc('id');
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->integer('user_id'));
+        }
+
+        if ($request->filled('action')) {
+            $query->where('action', $request->string('action'));
+        }
+
+        return view('senaapicola::admin.activities.history', [
+            'logs' => $query->paginate(15)->appends($request->query()),
+            'users' => User::orderBy('nickname')->get(['id', 'nickname']),
+            'actions' => ActivityLog::query()
+                ->select('action')
+                ->distinct()
+                ->orderBy('action')
+                ->pluck('action'),
+        ]);
+    }
+
+    public function tasksAdminIndex(Request $request)
+    {
+        $query = TaskAssignment::with(['assignedUser.roles', 'assignedByUser'])->orderByDesc('created_at');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->integer('assigned_to'));
+        }
+
+        return view('senaapicola::admin.tasks.index', [
+            'tasks' => $query->paginate(10)->appends($request->query()),
+            'users' => User::with('roles')->orderBy('nickname')->get(),
+        ]);
+    }
+
+    public function tasksAdminCreate()
+    {
+        return view('senaapicola::admin.tasks.create', [
+            'users' => User::with('roles')
+                ->whereHas('roles', function ($q) {
+                    $q->whereIn('slug', ['senaapicola.admin', 'senaapicola.intern']);
+                })
+                ->orderBy('nickname')
+                ->get(),
+        ]);
+    }
+
+    public function tasksAdminStore(Request $request)
+    {
+        $data = $request->validate([
+            'title' => 'required|string|max:150',
+            'description' => 'nullable|string|max:1000',
+            'assigned_to' => 'required|exists:users,id',
+            'due_date' => 'nullable|date|after_or_equal:today',
+            'admin_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $task = TaskAssignment::create([
+            ...$data,
+            'assigned_by' => auth()->id(),
+            'status' => 'pending',
+        ]);
+
+        $assignee = User::find($task->assigned_to);
+        $this->logActivity(
+            'task_assigned',
+            'Se asigno la tarea "' . $task->title . '" al usuario ' . ($assignee?->nickname ?? 'N/A') . '.'
+        );
+
+        return redirect()->route('senaapicola.admin.tasks.index')->with('success', 'Tarea asignada correctamente.');
+    }
+
+    public function tasksAdminUpdateStatus(Request $request, int|string $id)
+    {
+        $task = TaskAssignment::with('assignedUser')->findOrFail($id);
+
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['pending', 'in_progress', 'completed'])],
+        ]);
+
+        $task->status = $data['status'];
+        if ($data['status'] === 'completed' && ! $task->completed_at) {
+            $task->completed_at = now();
+        }
+        $task->save();
+
+        $this->logActivity(
+            'task_status_changed',
+            'Se cambio el estado de la tarea "' . $task->title . '" para ' . ($task->assignedUser?->nickname ?? 'N/A') . ' a ' . $task->status . '.'
+        );
+
+        return redirect()->route('senaapicola.admin.tasks.index')->with('success', 'Estado de tarea actualizado.');
+    }
+
+    public function tasksInternIndex()
+    {
+        $tasks = TaskAssignment::with(['assignedByUser', 'assignedUser.roles'])
+            ->where('assigned_to', auth()->id())
+            ->orderByDesc('created_at')
+            ->paginate(10);
+
+        return view('senaapicola::intern.tasks.index', compact('tasks'));
+    }
+
+    public function tasksInternComplete(Request $request, int|string $id)
+    {
+        $task = TaskAssignment::where('assigned_to', auth()->id())->findOrFail($id);
+
+        $data = $request->validate([
+            'evidence' => 'required|image|max:4096',
+        ]);
+
+        if ($task->evidence_path) {
+            Storage::disk('public')->delete($task->evidence_path);
+        }
+
+        $task->evidence_path = $request->file('evidence')->store('senaapicola/tasks/evidences', 'public');
+        $task->status = 'completed';
+        $task->completed_at = now();
+        $task->save();
+
+        $this->logActivity(
+            'task_completed',
+            'El usuario completo la tarea "' . $task->title . '" y adjunto evidencia fotografica.'
+        );
+
+        return redirect()->route('senaapicola.intern.tasks.index')->with('success', 'Tarea completada con evidencia.');
+    }
+
+    protected function logActivity(string $action, string $description): void
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return;
+        }
+
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'user_nickname' => $user->nickname,
+            'role_name' => optional($user->roles()->first())->name ?? 'Sin rol',
+            'action' => $action,
+            'description' => $description,
+            'ip_address' => request()?->ip(),
+            'logged_at' => now(),
+        ]);
+    }
+
+    public function adminMovementsIndex()
+    {
+        $entradas = (int) ProductionMonitoring::query()
+            ->where('action', 'entry')
+            ->sum('quantity');
+
+        $salidas = (int) ProductionMonitoring::query()
+            ->where('action', 'exit')
+            ->sum('quantity');
+
+        $disponibleBodega = $entradas - $salidas;
+
+        return view('senaapicola::admin.movements.index', [
+            'entradas' => $entradas,
+            'salidas' => $salidas,
+            'disponibleBodega' => $disponibleBodega,
+        ]);
+    }
+
+    public function adminMovementsBodega(Request $request)
+    {
+        $apiaries = Apiary::orderBy('name')->get();
+
+        $query = ProductionMonitoring::with('apiary')
+            ->where('action', 'entry')
+            ->orderByDesc('date');
+
+        if ($request->filled('apiary_id')) {
+            $query->where('apiary_id', $request->integer('apiary_id'));
+        }
+
+        $entries = $query->paginate(10);
+
+        return view('senaapicola::admin.movements.bodega', [
+            'apiaries' => $apiaries,
+            'entries' => $entries,
+        ]);
+    }
+
+    public function adminMovementsAgroindustria()
+    {
+        $exits = ProductionMonitoring::with('apiary')
+            ->where('action', 'exit')
+            ->orderByDesc('date')
+            ->get();
+
+        return view('senaapicola::admin.movements.agroindustria', [
+            'exits' => $exits,
+        ]);
+    }
+
+    public function internMovementsIndex()
+    {
+        $entradas = (int) ProductionMonitoring::query()
+            ->where('action', 'entry')
+            ->sum('quantity');
+
+        $salidas = (int) ProductionMonitoring::query()
+            ->where('action', 'exit')
+            ->sum('quantity');
+
+        $disponibleBodega = $entradas - $salidas;
+
+        return view('senaapicola::intern.movements.index', [
+            'entradas' => $entradas,
+            'salidas' => $salidas,
+            'disponibleBodega' => $disponibleBodega,
+        ]);
+    }
+
+    public function internMovementsBodega(Request $request)
+    {
+        $apiaries = Apiary::orderBy('name')->get();
+
+        $query = ProductionMonitoring::with('apiary')
+            ->where('action', 'entry')
+            ->orderByDesc('date');
+
+        if ($request->filled('apiary_id')) {
+            $query->where('apiary_id', $request->integer('apiary_id'));
+        }
+
+        $entries = $query->paginate(10);
+
+        return view('senaapicola::intern.movements.bodega', [
+            'apiaries' => $apiaries,
+            'entries' => $entries,
+        ]);
+    }
+
+    public function internMovementsAgroindustria()
+    {
+        $exits = ProductionMonitoring::with('apiary')
+            ->where('action', 'exit')
+            ->orderByDesc('date')
+            ->get();
+
+        return view('senaapicola::intern.movements.agroindustria', [
+            'exits' => $exits,
+        ]);
     }
 
     public function reportView(string $view)

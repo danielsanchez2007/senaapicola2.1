@@ -1,5 +1,74 @@
 @extends($scope === 'admin' ? 'senaapicola::layouts.master' : 'senaapicola::layouts.masterpas')
 
+@push('styles')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --sena-green: #39a900;
+            --sena-green-dark: #2d8000;
+            --sena-orange: #ff9f1c;
+            --sena-gold: #f5c518;
+            --glass: rgba(255, 255, 255, 0.09);
+        }
+
+        body {
+            background: linear-gradient(180deg, #0a1f0a 0%, #0f2a0f 100%);
+        }
+
+        .pollen-particle {
+            position: fixed;
+            width: 7px;
+            height: 7px;
+            background: radial-gradient(circle, var(--sena-gold), #ffeb3b);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--sena-gold);
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.65;
+            animation: floatPollen linear infinite;
+        }
+
+        @keyframes floatPollen {
+            0% { transform: translateY(100vh) rotate(0deg); }
+            100% { transform: translateY(-140px) rotate(720deg); }
+        }
+
+        .main-card {
+            background: var(--glass);
+            backdrop-filter: blur(22px);
+            border: 1px solid rgba(245, 197, 24, 0.35);
+            border-radius: 28px;
+            box-shadow: 0 30px 85px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--sena-green-dark) 0%, var(--sena-orange) 100%) !important;
+            color: white;
+            border: none;
+            padding: 2rem 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(255,255,255,0.25), transparent);
+            border-radius: 50%;
+        }
+
+        .glow-gold {
+            text-shadow: 0 0 20px var(--sena-gold);
+        }
+    </style>
+@endpush
+
 @section('content')
 @php
     $person = $user->person;
@@ -10,12 +79,14 @@
     }
     $updateRoute = $scope === 'admin' ? 'senaapicola.admin.profile.update' : 'senaapicola.intern.profile.update';
 @endphp
-<div class="container pt-4 pb-5">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-user-circle mr-2"></i>Mi perfil</h5>
-        </div>
-        <div class="card-body">
+<div class="container-fluid py-5 position-relative" style="z-index: 2;">
+    <div class="row">
+        <div class="col-12">
+            <div class="main-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-circle mr-2"></i>Mi perfil</h5>
+                </div>
+                <div class="card-body p-5">
             @if (session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
@@ -107,7 +178,47 @@
                     </div>
                 </form>
             @endif
+                </div>
+            </div>
+            <div id="pollen-container"></div>
         </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function createPollen() {
+        const container = document.getElementById('pollen-container');
+        if (!container) return;
+
+        const particle = document.createElement('div');
+        particle.classList.add('pollen-particle');
+
+        const size = Math.random() * 8 + 6;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${Math.random() * 100}vw`;
+        particle.style.opacity = Math.random() * 0.65 + 0.35;
+
+        const duration = Math.random() * 35 + 22;
+        particle.style.animationDuration = `${duration}s`;
+        particle.style.animationDelay = `-${Math.random() * 25}s`;
+
+        container.appendChild(particle);
+        setTimeout(() => particle.remove(), duration * 1000 + 1000);
+    }
+
+    setInterval(() => {
+        if (Math.random() > 0.25) createPollen();
+    }, 180);
+
+    for (let i = 0; i < 22; i++) {
+        setTimeout(createPollen, i * 90);
+    }
+</script>
+@endpush
+
+
+
+

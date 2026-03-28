@@ -65,10 +65,16 @@ Route::middleware(['web', 'auth', 'lang', 'senaapicola.app_access'])->prefix('se
     Route::delete('/admin/users/{id}', 'ModuleController@usersDestroy')->name('senaapicola.admin.users.destroy');
     Route::get('/admin/users/report', 'ModuleController@reportView')->defaults('view', 'users')->name('senaapicola.admin.users.report');
 
-    Route::get('/admin/movements', function () { return view('senaapicola::admin.movements.index'); })->name('senaapicola.admin.movements.index');
-    Route::get('/admin/movements/bodega', function () { return view('senaapicola::admin.movements.bodega'); })->name('senaapicola.admin.movements.bodega');
-    Route::get('/admin/movements/agroindustria', function () { return view('senaapicola::admin.movements.agroindustria'); })->name('senaapicola.admin.movements.agroindustria');
+    Route::get('/admin/movements', 'ModuleController@adminMovementsIndex')->name('senaapicola.admin.movements.index');
+    Route::get('/admin/movements/bodega', 'ModuleController@adminMovementsBodega')->name('senaapicola.admin.movements.bodega');
+    Route::get('/admin/movements/agroindustria', 'ModuleController@adminMovementsAgroindustria')->name('senaapicola.admin.movements.agroindustria');
     Route::get('/admin/movements/report', 'ModuleController@reportView')->defaults('view', 'movements')->name('senaapicola.admin.movements.report.all');
+
+    Route::get('/admin/activities/history', 'ModuleController@activitiesHistory')->name('senaapicola.admin.activities.history');
+    Route::get('/admin/activities/tasks', 'ModuleController@tasksAdminIndex')->name('senaapicola.admin.tasks.index');
+    Route::get('/admin/activities/tasks/create', 'ModuleController@tasksAdminCreate')->name('senaapicola.admin.tasks.create');
+    Route::post('/admin/activities/tasks', 'ModuleController@tasksAdminStore')->name('senaapicola.admin.tasks.store');
+    Route::put('/admin/activities/tasks/{id}/status', 'ModuleController@tasksAdminUpdateStatus')->name('senaapicola.admin.tasks.status');
 
     Route::get('/intern/apiaries', 'ModuleController@apiariesIndex')->defaults('scope', 'intern')->name('senaapicola.intern.apiaries.index');
     Route::get('/intern/apiaries/{id}', function ($id) { return redirect()->route('senaapicola.intern.apiaries.index'); })->name('senaapicola.intern.apiaries.show');
@@ -95,8 +101,10 @@ Route::middleware(['web', 'auth', 'lang', 'senaapicola.app_access'])->prefix('se
     Route::get('/intern/productions/{id}/edit', 'ModuleController@productionsEdit')->defaults('scope', 'intern')->name('senaapicola.intern.productions.edit');
     Route::put('/intern/productions/{id}', 'ModuleController@productionsUpdate')->defaults('scope', 'intern')->name('senaapicola.intern.productions.update');
     Route::delete('/intern/productions/{id}', 'ModuleController@productionsDestroy')->defaults('scope', 'intern')->name('senaapicola.intern.productions.destroy');
-    Route::get('/intern/movements', function () { return view('senaapicola::intern.movements.index'); })->name('senaapicola.intern.movements.index');
-    Route::get('/intern/movements/bodega', function () { return view('senaapicola::intern.movements.bodega'); })->name('senaapicola.intern.movements.bodega');
-    Route::get('/intern/movements/agroindustria', function () { return view('senaapicola::intern.movements.agroindustria'); })->name('senaapicola.intern.movements.agroindustria');
+    Route::get('/intern/movements', 'ModuleController@internMovementsIndex')->name('senaapicola.intern.movements.index');
+    Route::get('/intern/movements/bodega', 'ModuleController@internMovementsBodega')->name('senaapicola.intern.movements.bodega');
+    Route::get('/intern/movements/agroindustria', 'ModuleController@internMovementsAgroindustria')->name('senaapicola.intern.movements.agroindustria');
     Route::get('/intern/movements/report', 'ModuleController@reportView')->defaults('view', 'movements')->name('senaapicola.intern.movements.report');
+    Route::get('/intern/activities/tasks', 'ModuleController@tasksInternIndex')->name('senaapicola.intern.tasks.index');
+    Route::put('/intern/activities/tasks/{id}/complete', 'ModuleController@tasksInternComplete')->name('senaapicola.intern.tasks.complete');
 });

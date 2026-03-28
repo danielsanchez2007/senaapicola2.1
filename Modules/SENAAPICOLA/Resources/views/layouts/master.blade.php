@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{{ asset('AdminLTE/plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @stack('styles')
 
     <script src="{{ asset('js/app.js') }}" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -239,6 +240,36 @@
 
                         <li class="nav-item has-treeview">
                             <a href="#" class="nav-link">
+                                <i class="nav-icon fas fa-warehouse text-info"></i>
+                                <p>
+                                    Movimientos
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="{{ route('senaapicola.admin.movements.index') }}" class="nav-link">
+                                        <i class="fas fa-list-ul nav-icon text-primary"></i>
+                                        <p>Resumen</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('senaapicola.admin.movements.bodega') }}" class="nav-link">
+                                        <i class="fas fa-warehouse nav-icon text-success"></i>
+                                        <p>Entradas</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('senaapicola.admin.movements.agroindustria') }}" class="nav-link">
+                                        <i class="fas fa-dolly nav-icon text-warning"></i>
+                                        <p>Salidas</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link">
                                 <i class="nav-icon fas fa-user-plus text-success"></i><!-- Alternativa para Agregar usuarios -->
                                 <p>
                                     Agregar Usuario
@@ -295,15 +326,15 @@
                             </a>
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
-                                    <a href="{{ route('senaapicola.admin.monitorings.create') }}" class="nav-link">
+                                    <a href="{{ route('senaapicola.admin.activities.history') }}" class="nav-link">
                                         <i class="fas fa-clipboard-list nav-icon text-success"></i> 
-                                        <p>Registro</p>
+                                        <p>Historial</p>
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="{{ route('senaapicola.admin.monitorings.index') }}" class="nav-link">
+                                    <a href="{{ route('senaapicola.admin.tasks.index') }}" class="nav-link">
                                         <i class="fas fa-list-alt nav-icon text-primary"></i>
-                                        <p>Listado</p>
+                                        <p>Tareas</p>
                                     </a>
                                 </li>
                             </ul>
@@ -370,6 +401,7 @@
     <script src="{{ asset('AdminLTE/dist/js/demo.js') }}"></script>
     <!-- AdminLTE dashboard demo -->
     <script src="{{ asset('AdminLTE/dist/js/pages/dashboard2.js') }}"></script>
+    @stack('scripts')
 </body>
 
 </html>

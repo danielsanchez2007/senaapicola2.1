@@ -1,222 +1,164 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sena Apicola - Sistema de Gestión Apícola</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
+@extends('senaapicola::layouts.master')
+
+@push('styles')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #FFA500; /* Naranja miel */
-            --secondary-color: #8B4513; /* Marrón colmena */
-            --dark-color: #1A1A1A;
-            --light-color: #F8F9FA;
+            --sena-green: #39a900;
+            --sena-green-dark: #2d8000;
+            --sena-orange: #ff9f1c;
+            --sena-gold: #f5c518;
         }
-        
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #FFF9E6;
-        }
-        
-        .navbar {
-            background-color: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 15px 0;
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-            color: var(--secondary-color);
-            font-size: 2.5rem;
-        }
-        
-        .navbar-brand span {
-            color: var(--primary-color);
-        }
-        
-        .nav-link {
-            font-weight: 500;
-            color: var(--dark-color);
-            margin: 0 10px;
-            position: relative;
-        }
-        
-        .nav-link:hover {
-            color: var(--primary-color);
-        }
-        
-        .nav-link.active {
-            color: var(--primary-color);
-        }
-        
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: var(--primary-color);
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            padding: 8px 20px;
-            font-weight: 500;
-        }
-        
-        .btn-primary:hover {
-            background-color: #e69500;
-            border-color: #e69500;
-        }
-        
-        .btn-outline-secondary {
-            border-color: var(--secondary-color);
-            color: var(--secondary-color);
-        }
-        
-        .btn-outline-secondary:hover {
-            background-color: var(--secondary-color);
+            background: linear-gradient(180deg, #0a1f0a 0%, #0f2a0f 100%);
             color: white;
+            overflow-x: hidden;
         }
-        
+
+        /* Partículas de polen flotando */
+        .pollen-particle {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, var(--sena-gold), #ffeb3b);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--sena-gold);
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.7;
+            animation: floatPollen linear infinite;
+        }
+
+        @keyframes floatPollen {
+            0%   { transform: translateY(100vh) rotate(0deg); }
+            100% { transform: translateY(-200px) rotate(720deg); }
+        }
+
         .hero-section {
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1587049352851-8d4e89133924?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
+            background: linear-gradient(rgba(10, 31, 10, 0.85), rgba(15, 42, 15, 0.85)), 
+                        url('https://images.unsplash.com/photo-1587049352851-8d4e89133924?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80');
             background-size: cover;
             background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .navbar {
+            background: rgba(10, 31, 10, 0.95) !important;
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(245, 197, 24, 0.3);
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 2.1rem;
             color: white;
-            padding: 120px 0;
-            text-align: center;
         }
-        
+
+        .navbar-brand span {
+            color: var(--sena-gold);
+        }
+
+        .nav-link {
+            color: #e0f2e0 !important;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--sena-gold) !important;
+        }
+
         .hero-title {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
+            font-size: 3.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
         }
-        
+
         .hero-subtitle {
-            font-size: 1.5rem;
-            margin-bottom: 30px;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
+            font-size: 1.35rem;
+            max-width: 720px;
+            opacity: 0.95;
         }
-        
-        .feature-icon {
-            font-size: 2.5rem;
-            color: var(--primary-color);
-            margin-bottom: 20px;
-        }
-        
-        .feature-card {
-            padding: 30px;
-            border-radius: 10px;
-            background-color: white;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            height: 100%;
-            transition: transform 0.3s;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-10px);
-        }
-        
-        .section-title {
+
+        .btn-sena {
+            background: linear-gradient(90deg, var(--sena-green), var(--sena-orange));
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 14px 36px;
             font-weight: 700;
-            color: var(--secondary-color);
+            font-size: 1.1rem;
+            box-shadow: 0 10px 30px rgba(57, 169, 0, 0.4);
+            transition: all 0.3s;
+        }
+
+        .btn-sena:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 159, 28, 0.5);
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(245, 197, 24, 0.25);
+            border-radius: 24px;
+            padding: 2.5rem 1.8rem;
+            height: 100%;
+            transition: all 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-12px);
+            border-color: var(--sena-gold);
+            background: rgba(255,255,255,0.12);
+        }
+
+        .feature-icon {
+            font-size: 3.2rem;
+            color: var(--sena-gold);
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            color: white;
             position: relative;
             display: inline-block;
-            margin-bottom: 40px;
         }
-        
+
         .section-title::after {
             content: '';
             position: absolute;
-            bottom: -10px;
+            bottom: -12px;
             left: 0;
-            width: 50%;
-            height: 3px;
-            background-color: var(--primary-color);
+            width: 60%;
+            height: 4px;
+            background: linear-gradient(to right, var(--sena-green), var(--sena-orange));
+            border-radius: 2px;
         }
-        
-        footer {
-            background-color: var(--dark-color);
-            color: white;
-            padding: 50px 0 20px;
-        }
-        
-        .footer-logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-        
-        .footer-links h5 {
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-        
-        .footer-links ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        
-        .footer-links li {
-            margin-bottom: 10px;
-        }
-        
-        .footer-links a {
-            color: #adb5bd;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        
-        .footer-links a:hover {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-        
-        .social-icons a {
-            color: white;
-            font-size: 1.2rem;
-            margin-right: 15px;
-            transition: color 0.3s;
-        }
-        
-        .social-icons a:hover {
-            color: var(--primary-color);
-        }
-        
-        .copyright {
-            border-top: 1px solid #495057;
-            padding-top: 20px;
-            margin-top: 30px;
-        }
-        
-        .honeycomb-bg {
-            position: absolute;
-            opacity: 0.05;
-            z-index: -1;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0L100 25V75L50 100L0 75V25L50 0Z' fill='%23FFA500'/%3E%3C/svg%3E");
-            background-size: 20px;
+
+        .glow-gold {
+            text-shadow: 0 0 30px var(--sena-gold);
         }
     </style>
-</head>
-<body>
+@endpush
+
+@section('content')
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <span>Sena</span>Apicola
+                <i class="fas fa-hive me-2"></i><span>Sena</span>Apicola
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -233,18 +175,20 @@
                         <a class="nav-link" href="#">Conócenos</a>
                     </li>
                     @if(Auth::check() && checkRol('senaapicola.admin'))
-                    <li class="nav-item">
-                        <a href="{{ route('senaapicola.admin.welcome') }}" class="nav-link @if (Route::is('senaapicola.admin.*')) active @endif">Administrador</a>
-                    </li>
-                @endif
-                @if(Auth::check() && checkRol('senaapicola.intern'))
-                    <li class="nav-item">
-                        <a href="{{ route('senaapicola.intern.panelpas') }}" class="nav-link @if (Route::is('senaapicola.intern.*')) active @endif">Pasante</a>
-                    </li>
-                @endif
+                        <li class="nav-item">
+                            <a href="{{ route('senaapicola.admin.welcome') }}" class="nav-link">Administrador</a>
+                        </li>
+                    @endif
+                    @if(Auth::check() && checkRol('senaapicola.intern'))
+                        <li class="nav-item">
+                            <a href="{{ route('senaapicola.intern.panelpas') }}" class="nav-link">Pasante</a>
+                        </li>
+                    @endif
                 </ul>
                 <div class="d-flex">
-                    <a href="{{ route('login') }}" class="btn btn-primary me-2">Iniciar Sesión</a>
+                    <a href="{{ route('login') }}" class="btn btn-sena">
+                        <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                    </a>
                 </div>
             </div>
         </div>
@@ -252,125 +196,149 @@
 
     <!-- Hero Section -->
     <section class="hero-section">
-        <div class="container">
-            <h1 class="hero-title">Gestión Inteligente para tu Producción Apícola</h1>
-            <p class="hero-subtitle">Optimiza el manejo de tus colmenas, producción de miel y análisis de datos con nuestra plataforma especializada para apicultores modernos.</p>
-            <div class="mt-4">
-                <a href="#" class="btn btn-primary btn-lg me-2">Ver Demo</a>
-                <a href="#" class="btn btn-outline-light btn-lg">Más Información</a>
+        <div class="container hero-content">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-10">
+                    <h1 class="hero-title glow-gold mb-4">
+                        Gestión Inteligente<br>de la Apicultura
+                    </h1>
+                    <p class="hero-subtitle mx-auto">
+                        Plataforma especializada del Sena para el registro, seguimiento y análisis de apiarios, 
+                        colmenas y producción de miel.
+                    </p>
+                    <div class="mt-5">
+                        <a href="{{ route('login') }}" class="btn btn-sena btn-lg px-5 me-3">
+                            Acceder al Sistema
+                        </a>
+                        <a href="#" class="btn btn-outline-light btn-lg px-5">
+                            Conocer más
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Partículas de polen -->
+        <div id="pollen-container"></div>
     </section>
 
     <!-- Features Section -->
-    <section class="py-5" style="background-color: #FFF9E6;">
-        <div class="honeycomb-bg"></div>
+    <section class="py-5">
         <div class="container py-5">
-            <h2 class="text-center section-title">Características Principales</h2>
+            <div class="text-center mb-5">
+                <h2 class="section-title display-5 fw-bold">Características Principales</h2>
+                <p class="lead text-white-50 mt-3">Herramientas diseñadas para la gestión eficiente de tu apiario</p>
+            </div>
+
             <div class="row g-4">
                 <div class="col-md-4">
-                    <div class="feature-card">
+                    <div class="feature-card text-center">
                         <div class="feature-icon">
-                            <i class="fas fa-bee"></i>
+                            <i class="fas fa-hive"></i>
                         </div>
-                        <h3>Manejo de Colmenas</h3>
-                        <p>Registro detallado de cada colmena, incluyendo ubicación, producción, salud y tratamientos aplicados.</p>
+                        <h4 class="fw-bold mb-3">Gestión de Colmenas</h4>
+                        <p class="text-white-70">
+                            Registro detallado de cada colmena, estado de salud, ubicación y seguimiento técnico.
+                        </p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="feature-card">
+                    <div class="feature-card text-center">
                         <div class="feature-icon">
-                            <i class="fas fa-honey-pot"></i>
+                            <i class="fas fa-boxes"></i>
                         </div>
-                        <h3>Control de Producción</h3>
-                        <p>Seguimiento preciso de la producción de miel, polen, propóleos y otros productos de la colmena.</p>
+                        <h4 class="fw-bold mb-3">Control de Producción</h4>
+                        <p class="text-white-70">
+                            Entradas y salidas de miel, polen y otros productos. Reportes de cosecha neta en tiempo real.
+                        </p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="feature-card">
+                    <div class="feature-card text-center">
                         <div class="feature-icon">
-                            <i class="fas fa-chart-line"></i>
+                            <i class="fas fa-tasks"></i>
                         </div>
-                        <h3>Análisis y Reportes</h3>
-                        <p>Generación de reportes personalizados y análisis de tendencias para mejorar tu producción.</p>
+                        <h4 class="fw-bold mb-3">Tareas y Seguimientos</h4>
+                        <p class="text-white-70">
+                            Asignación de tareas a pasantes, seguimiento de actividades y registro de observaciones.
+                        </p>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section class="py-5 bg-white">
-        <div class="container py-5">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <h2 class="section-title">Sobre Nuestro Sistema</h2>
-                    <p>HiveMaster es una solución integral desarrollada por expertos en apicultura y tecnología, diseñada para simplificar y optimizar la gestión de tu unidad apícola.</p>
-                    <p>Nuestra plataforma combina años de experiencia en el campo con las últimas tecnologías para ofrecerte herramientas que realmente necesitas.</p>
-                    <a href="#" class="btn btn-primary mt-3">Conoce más</a>
-                </div>
-                <div class="col-lg-6">
-                    <img src="https://images.unsplash.com/photo-1587049352851-8d4e89133924?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Apicultura" class="img-fluid rounded shadow">
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer>
+    <footer class="bg-dark py-5 mt-5">
         <div class="container">
             <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <div class="footer-logo">
-                        <span>Hive</span>Master
-                    </div>
-                    <p>Sistema de Gestión Apícola diseñado para profesionales que buscan eficiencia, control y crecimiento en su producción.</p>
-                    <div class="social-icons mt-4">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
+                <div class="col-lg-5 mb-4">
+                    <h3 class="fw-bold text-white mb-3">
+                        <i class="fas fa-hive me-2"></i>Sena<span class="text-warning">Apicola</span>
+                    </h3>
+                    <p class="text-white-50">
+                        Sistema de gestión apícola desarrollado para el programa Sena. 
+                        Monitoreo, registro y análisis integral de la producción apícola.
+                    </p>
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4">
-                    <div class="footer-links">
-                        <h5>Enlaces</h5>
-                        <ul>
-                            <li><a href="#">Inicio</a></li>
-                            <li><a href="#">Infórmate</a></li>
-                            <li><a href="#">Conócenos</a></li>
-                        </ul>
-                    </div>
+                    <h5 class="text-white mb-3">Enlaces</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white-50 text-decoration-none">Inicio</a></li>
+                        <li><a href="#" class="text-white-50 text-decoration-none">Infórmate</a></li>
+                        <li><a href="#" class="text-white-50 text-decoration-none">Conócenos</a></li>
+                    </ul>
                 </div>
                 <div class="col-lg-2 col-md-6 mb-4">
-                    <div class="footer-links">
-                        <h5>Legal</h5>
-                        <ul>
-                            <li><a href="#">Términos</a></li>
-                            <li><a href="#">Privacidad</a></li>
-                            <li><a href="#">Cookies</a></li>
-                            <li><a href="#">Licencias</a></li>
-                        </ul>
-                    </div>
+                    <h5 class="text-white mb-3">Sistema</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ route('login') }}" class="text-white-50 text-decoration-none">Iniciar Sesión</a></li>
+                    </ul>
                 </div>
-                <div class="col-lg-4 mb-4">
-                    <div class="footer-links">
-                        <h5>Contacto</h5>
-                        <ul>
-                            <li><i class="fas fa-map-marker-alt me-2"></i> Av. Apícola 123, Colmenar</li>
-                            <li><i class="fas fa-phone me-2"></i> +1 234 567 890</li>
-                            <li><i class="fas fa-envelope me-2"></i> info@hivemaster.com</li>
-                        </ul>
-                    </div>
+                <div class="col-lg-3 mb-4">
+                    <h5 class="text-white mb-3">Contacto Sena</h5>
+                    <p class="text-white-50 small">
+                        Centro de Formación Agropecuaria<br>
+                        Neiva - Huila
+                    </p>
                 </div>
             </div>
-            <div class="copyright text-center">
-                <p class="mb-0">&copy; 2025 Sena Apicola. Todos los derechos reservados.</p>
+            <hr class="border-secondary">
+            <div class="text-center text-white-50 small pt-3">
+                © 2026 Sena Apícola - Todos los derechos reservados
             </div>
         </div>
     </footer>
+@endsection
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+@push('scripts')
+<script>
+    // Partículas de polen flotando en la landing
+    function createPollen() {
+        const container = document.getElementById('pollen-container') || document.body;
+        const particle = document.createElement('div');
+        particle.classList.add('pollen-particle');
+
+        const size = Math.random() * 9 + 6;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${Math.random() * 100}vw`;
+        particle.style.opacity = Math.random() * 0.6 + 0.4;
+
+        const duration = Math.random() * 40 + 25;
+        particle.style.animationDuration = `${duration}s`;
+        particle.style.animationDelay = `-${Math.random() * 30}s`;
+
+        container.appendChild(particle);
+        setTimeout(() => particle.remove(), duration * 1000 + 2000);
+    }
+
+    setInterval(() => {
+        if (Math.random() > 0.2) createPollen();
+    }, 160);
+
+    for (let i = 0; i < 30; i++) {
+        setTimeout(createPollen, i * 80);
+    }
+</script>
+@endpush
